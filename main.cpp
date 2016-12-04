@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <windows.h>
-
+//123
 using namespace std;
 
 struct Prop{
