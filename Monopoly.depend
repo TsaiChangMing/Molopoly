@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1480709709 source:d:\desk\programs\c++\monopoly\main.cpp
+	<iostream>
+	<string>
+	<fstream>
+	<cstdlib>
+	<ctime>
+	<windows.h>
+
