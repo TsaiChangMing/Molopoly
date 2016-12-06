@@ -23,6 +23,7 @@ struct Prop{
             return price[i];
         }
 };
+Prop props;
 
 struct infomation{
     private:
@@ -106,6 +107,10 @@ struct Map{
         char getprop(){
             return prop;
         }
+
+        void setprop(int n){
+            this->prop = props.Sign(n);
+        }
 };
 
 Map* head = new Map(0, 0, "起點");
@@ -126,7 +131,7 @@ struct player{
             name = n;
             money = m;
             stay = 0;
-            for(int k = 0; k < 3; k++)  prop[k] = 0;
+            for(int k = 0; k < 3; k++)  prop[k] = 5;
             locate = head;
             next = NULL;
         }
@@ -190,9 +195,12 @@ void Display(){
     cout << endl;
 
     do{
-        if(temp->getprop() != NULL)
-            cout << temp->getprop();
         int count = 0;
+        if(temp->getprop() != NULL){
+            cout << temp->getprop();
+            count++;
+        }
+
         flag = front;
         do{
             if(temp->getnumber() == flag->locate->getnumber()){
@@ -201,8 +209,7 @@ void Display(){
             }
             flag = flag->next;
         }while(flag != NULL);
-        for(int i = 0; i < 4-count; i++)    cout << " ";
-        cout << "  ";
+        for(int i = 0; i < 6-count; i++)    cout << " ";
         temp = temp->next;
     }while(temp != head);
     cout << endl << endl;
@@ -344,7 +351,7 @@ void act(){
     switch(front->locate->gettype()){
         case 6: //Store
             cout << "Price:\ndrug\tLandmine\tRoadlock\n";
-            cout << "  300\t500\t1000\n";
+            cout << " 300\t  500\t\t  1000\n";
             for(int i = 0; i < 3; i++){
                 cout << "How many " << prop.Sign(i) << " do you want to buy?";
                 cin >> c;
@@ -420,7 +427,6 @@ void act(){
 
 void move(int n){
     int i, dice, step = 0;
-    move(2);
     cout << front->getname() << "'s turn:\n";
     cout << "Press any key to throw the dices...";
     fflush(stdin);
@@ -446,15 +452,46 @@ void move(int n){
 }
 
 void setprop(){
-    if(front->getprop(0) != 0 || front->getprop(1) != 0 || front->getprop(2) != 0){
+    while(true){
+        if(front->getprop(0) == 0 && front->getprop(1) == 0 && front->getprop(2) == 0)  break;
+        int prop, place;
         char choose;
+
         cout << "Do you want to set props on the map?";
         do{
             cin >> choose;
             if(choose == 'y' || choose == 'n')  break;
             cout << "Please enter again:";
         }while(true);
+        if(choose == 'n')   break;
 
+        cout << "Where do you want to put?";
+        do{
+            cin >> place;
+            if(place > -1 && place < 27)  break;
+            cout << "Please enter again:";
+        }while(true);
+
+        cout << "Whitch prop do you want to put?";
+        do{
+            cin >> prop;
+            if(prop < 0 || prop >2){
+                cout << "Please enter a number between 0 and 3:";
+                continue;
+            }
+            if(front->getprop(prop) != 0)  break;
+            cout << "You don't have this prop:";
+        }while(true);
+
+        while(temp->getnumber() != place)   temp = temp->next;
+        temp->setprop(prop);
+        cout << "Prop set successful!\nWould you want to set another prop?";
+        do{
+            cin >> choose;
+            if(choose == 'y' || choose == 'n')  break;
+            cout << "Please enter again:";
+        }while(true);
+        if(choose == 'n')   break;
     }
     move(2);
 }
