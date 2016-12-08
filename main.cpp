@@ -4,7 +4,12 @@
 #include <cstdlib>
 #include <ctime>
 #include <windows.h>
-//123
+
+#define origiMoney 20000
+#define passStart 2000
+#define stayPrison 3
+#define stayHospital 1
+
 using namespace std;
 
 struct Prop{
@@ -108,8 +113,8 @@ struct Map{
             return prop;
         }
 
-        void setprop(int n){
-            this->prop = props.Sign(n);
+        void setprop(char p){
+            this->prop = p;
         }
 };
 
@@ -176,6 +181,72 @@ player* out = NULL;
 
 void Display(){
     temp = head;
+    system("CLS");
+    cout << endl << "\t\t\t\t\t\t\t\t";
+    flag = front;
+    do{
+        cout << flag->getid() << "\t\t";
+        flag = flag->next;
+    }while(flag != NULL);
+    cout << "\t\t\t";
+    if(out != NULL){
+        flag = out;
+        do{
+            cout << flag->getid() << "\t\t";
+            flag = flag->next;
+        }while(flag != NULL);
+    }
+    cout << endl << "\t\t\t\t\t\t\t\t";
+
+    flag = front;
+    do{
+        cout << flag->getname() << "\t\t";
+        flag = flag->next;
+    }while(flag != NULL);
+    cout << "\t\t\t";
+    if(out != NULL){
+        flag = out;
+        do{
+            cout << flag->getname() << "\t\t";
+            flag = flag->next;
+        }while(flag != NULL);
+    }
+    cout << endl << "\t\t\t\t\t\t\t\t";
+
+    flag = front;
+    do{
+        cout << flag->getmoney() << "\t\t";
+        flag = flag->next;
+    }while(flag != NULL);
+    cout << "\t\t\t";
+    if(out != NULL){
+        flag = out;
+        do{
+            cout << flag->getmoney() << "\t\t";
+            flag = flag->next;
+        }while(flag != NULL);
+    }
+    cout << endl << "\t\t\t\t\t\t\t\t";
+    flag = front;
+    do{
+        for(int i = 0; i < 3; i++)
+            cout << props.Sign(i) << ":" << flag->getprop(i) << " ";
+        cout << "\t";
+        flag = flag->next;
+    }while(flag != NULL);
+    cout << "\t\t\t";
+    if(out != NULL){
+        flag = out;
+        do{
+            for(int i = 0; i < 3; i++)
+                cout << props.Name(i) << ":" << flag->getprop(i) << " ";
+            cout << "\t";
+            flag = flag->next;
+        }while(flag != NULL);
+    }
+
+    cout << endl << front->getname() << "'s turn:" << endl << endl;
+
     do{
         if(temp->gettype() == 1){
             if(temp->info->getowner() != '\0')
@@ -212,52 +283,7 @@ void Display(){
         for(int i = 0; i < 6-count; i++)    cout << " ";
         temp = temp->next;
     }while(temp != head);
-    cout << endl << endl;
-
-    flag = front;
-    do{
-        cout << flag->getid() << "\t";
-        flag = flag->next;
-    }while(flag != NULL);
-    cout << "\t\t\t";
-    if(out != NULL){
-        flag = out;
-        do{
-            cout << flag->getid() << "\t";
-            flag = flag->next;
-        }while(flag != NULL);
-    }
-    cout << endl;
-
-    flag = front;
-    do{
-        cout << flag->getname() << "\t";
-        flag = flag->next;
-    }while(flag != NULL);
-    cout << "\t\t\t";
-    if(out != NULL){
-        flag = out;
-        do{
-            cout << flag->getname() << "\t";
-            flag = flag->next;
-        }while(flag != NULL);
-    }
-    cout << endl;
-
-    flag = front;
-    do{
-        cout << flag->getmoney() << "\t";
-        flag = flag->next;
-    }while(flag != NULL);
-    cout << "\t\t\t";
-    if(out != NULL){
-        flag = out;
-        do{
-            cout << flag->getmoney() << "\t";
-            flag = flag->next;
-        }while(flag != NULL);
-    }
-    cout << endl;
+    cout << endl << endl << endl;
 }
 
 void specialPoint(int n){
@@ -361,11 +387,11 @@ void act(){
             break;
         case 5: //Prison
             cout << "Stay in prison for 3 days" << endl;
-            front->addstay(3);
+            front->addstay(stayPrison);
             break;
         case 4: //Hospital
             cout << "Spend 200 dollar to be hospitalized for 1 day" << endl;
-            front->addstay(1);
+            front->addstay(stayHospital);
             front->addmoney(-200);
             break;
         case 3: //Fortune
@@ -426,8 +452,8 @@ void act(){
 }
 
 void move(int n){
+    Display();
     int i, dice, step = 0;
-    cout << front->getname() << "'s turn:\n";
     cout << "Press any key to throw the dices...";
     fflush(stdin);
     getchar();
@@ -442,56 +468,76 @@ void move(int n){
     for(i = 0; i < step; i++){
         front->locate = front->locate->next;
         if(front->locate->gettype() == 0 && step - i > 1)   //經過起點
-            front->addmoney(2000);
-        system("CLS");
+            front->addmoney(passStart);
         Display();
+        if(front->locate->getprop() == '#'){
+            front->locate->setprop(NULL);
+            cout << "There is a roadblock in front of you, you have no idea how to pass it\n\n";
+            break;
+        }
         Sleep(350);
     }
     cout << "Arrive: " << front->locate->getname() << endl;
+    if(front->locate->getprop() == '@'){
+        front->locate->setprop(NULL);
+        while(front->locate->getname() != "監獄") front->locate = front->locate->next;
+        cout << "A police saw you take a pack of drug, thus you have been sent to prison!!\n\n";
+    }
+    if(front->locate->getprop() == '*'){
+        front->locate->setprop(NULL);
+        while(front->locate->getname() != "醫院") front->locate = front->locate->next;
+    }
     act();
 }
 
 void setprop(){
-    while(true){
-        if(front->getprop(0) == 0 && front->getprop(1) == 0 && front->getprop(2) == 0)  break;
-        int prop, place;
-        char choose;
 
+    int prop, place;
+    char choose;
+    if(front->getprop(0) != 0 || front->getprop(1) != 0 || front->getprop(2) != 0){
         cout << "Do you want to set props on the map?";
         do{
             cin >> choose;
             if(choose == 'y' || choose == 'n')  break;
             cout << "Please enter again:";
         }while(true);
-        if(choose == 'n')   break;
+        while(choose == 'y'){
+            cout << "Where do you want to put?";
+            do{
+                cin >> place;
+                if(place > -1 && place < 27)  break;
+                cout << "Please enter again:";
+            }while(true);
 
-        cout << "Where do you want to put?";
-        do{
-            cin >> place;
-            if(place > -1 && place < 27)  break;
-            cout << "Please enter again:";
-        }while(true);
+            cout << "Whitch prop do you want to put?";
+            do{
+                cin >> prop;
+                if(prop < 0 || prop >2){
+                    cout << "Please enter a number between 0 and 3:";
+                    continue;
+                }
+                if(front->getprop(prop) != 0)  break;
+                cout << "You don't have this prop:";
+            }while(true);
 
-        cout << "Whitch prop do you want to put?";
-        do{
-            cin >> prop;
-            if(prop < 0 || prop >2){
-                cout << "Please enter a number between 0 and 3:";
-                continue;
+            while(temp->getnumber() != place)   temp = temp->next;
+            if(temp->getprop() != NULL){
+                system("CLS");
+                cout << "Prop set failed, there has a prop already!!\n";
             }
-            if(front->getprop(prop) != 0)  break;
-            cout << "You don't have this prop:";
-        }while(true);
-
-        while(temp->getnumber() != place)   temp = temp->next;
-        temp->setprop(prop);
-        cout << "Prop set successful!\nWould you want to set another prop?";
-        do{
-            cin >> choose;
-            if(choose == 'y' || choose == 'n')  break;
-            cout << "Please enter again:";
-        }while(true);
-        if(choose == 'n')   break;
+            else{
+                temp->setprop(props.Sign(prop));
+                front->addprop(-1, prop);
+                Display();
+                cout << "Prop set successful!\n";
+            }
+            cout << "Would you want to set another prop?";
+            do{
+                cin >> choose;
+                if(choose == 'y' || choose == 'n')  break;
+                cout << "Please enter again:";
+            }while(true);
+        }
     }
     move(2);
 }
@@ -529,19 +575,16 @@ void initialmap(player* o){
 
 int main(){
     srand(time(NULL));
-    int m, n;
+    int n, m = origiMoney;
     string name;
     if(!createMap()){
         cout << "Loading map failed\n";
         return 0;
-    }/*
-    cout << "Set initial money:";
-    cin >> */m=50000;
+    }
     cout << "How many players:";
     cin >> n;
     createPlayer(m,n);
     while(n != 1){
-        system("CLS");
         Display();
         if(front->getstay() != 0){
             cout << front->getname() << " still stay " << front->getstay() << " days\n";
@@ -554,7 +597,6 @@ int main(){
         }
         system("pause");
     }
-    system("CLS");
     Display();
     return 0;
 }
