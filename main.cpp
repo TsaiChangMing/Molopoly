@@ -4,9 +4,10 @@
 #include <cstdlib>
 #include <ctime>
 #include <windows.h>
+#include <conio.h>
 
-#define origiMoney 20000
-#define passStart 2000
+#define origiMoney 10000
+#define passStart 500
 #define stayPrison 3
 #define stayHospital 1
 
@@ -136,21 +137,21 @@ struct player{
             name = n;
             money = m;
             stay = 0;
-            for(int k = 0; k < 3; k++)  prop[k] = 5;
+            for(int k = 0; k < 3; k++)  prop[k] = 0;
             locate = head;
             next = NULL;
         }
 
         void addmoney(int m){
-            money += m;
+            this->money += m;
         }
 
         void addstay(int s){
-            stay += s;
+            this->stay += s;
         }
 
         void addprop(int i, int n){
-            prop[i] += n;
+            this->prop[i] += n;
         }
 
         char getid(){
@@ -286,43 +287,6 @@ void Display(){
     cout << endl << endl << endl;
 }
 
-void specialPoint(int n){
-    Map* specail;
-    int m = n-1;
-    for(int i = 1; i < m; i++){
-        temp = temp->next;
-        if(i % (m/4) == 0){
-            switch(i/(m/4)){
-                case 1:
-                    specail = new Map(n++,5,"監獄");
-                    break;
-                case 2:
-                    specail = new Map(n++,6,"商店");
-                    break;
-                case 3:
-                    specail = new Map(n++,4,"醫院");
-                    break;
-            }
-            specail->next = temp->next;
-            temp->next = specail;
-            temp = temp->next;
-        }
-        if(i % (m/4) == m/8){
-            switch(i/(m/4) % 2){
-                case 0:
-                    specail = new Map(n++,2,"命運");
-                    break;
-                case 1:
-                    specail = new Map(n++,3,"機會");
-                    break;
-            }
-            specail->next = temp->next;
-            temp->next = specail;
-            temp = temp->next;
-        }
-    }
-}
-
 bool createMap(){
     string name;
     int i, j, price[5], tolls[5];
@@ -340,15 +304,24 @@ bool createMap(){
             read.getline(in,sizeof(in),'\t');
             tolls[j] = atoi(in);
         }
-        temp->next = new Map(i,1,name);
-        temp = temp->next;
-        temp->info = new infomation(price,tolls);
+        if(price[0] != 0){
+            temp->next = new Map(i,1,name);
+            temp = temp->next;
+            temp->info = new infomation(price,tolls);
+        }
+        else{
+            if(name == "機會")    temp->next = new Map(i,2,name);
+            if(name == "命運")    temp->next = new Map(i,3,name);
+            if(name == "醫院")    temp->next = new Map(i,4,name);
+            if(name == "監獄")    temp->next = new Map(i,5,name);
+            if(name == "商店")    temp->next = new Map(i,6,name);
+            temp = temp->next;
+        }
         read.getline(in,sizeof(in),'\n');
     }
     temp->next = head;
     temp = head;
-    if((i-1) % 4 != 0)  return false;
-    specialPoint(i);
+    if(i % 4 != 0)  return false;
     temp = head;
     return true;
 }
@@ -376,10 +349,10 @@ void act(){
     char choose;
     switch(front->locate->gettype()){
         case 6: //Store
-            cout << "Price:\ndrug\tLandmine\tRoadlock\n";
-            cout << " 300\t  500\t\t  1000\n";
+            cout << "Price:\n  drug\t\tLandmine\tRoadlock\n";
+            cout << "  300\t\t  500\t\t  1000\n";
             for(int i = 0; i < 3; i++){
-                cout << "How many " << prop.Sign(i) << " do you want to buy?";
+                cout << "How many " << prop.Name(i) << " do you want to buy?";
                 cin >> c;
                 front->addprop(i,c);
                 front->addmoney(prop.Price(i)*(-c));
@@ -405,6 +378,7 @@ void act(){
                     cout << "This land's price is " << front->locate->info->getprice() << endl;
                     cout << "After you buy it, you still have " << front->getmoney()-front->locate->info->getprice() << " dollars" << endl;
                     cout << "Wanna buy the land?(y/n):";
+                    fflush(stdin);
                     cin >> choose;
                     if(choose == 'y'){
                         front->addmoney(-front->locate->info->getprice());
@@ -427,6 +401,7 @@ void act(){
                     cout << "Upgrade this land's price is " << front->locate->info->getprice() << " dollars" << endl;
                     cout << "After you upgrade it, you still have " << front->getmoney()-front->locate->info->getprice() << " dollars" << endl;
                     cout << "Wanna upgrade the land?(y/n):";
+                    fflush(stdin);
                     cin >> choose;
                     if(choose == 'y'){
                         front->addmoney(-front->locate->info->getprice());
@@ -455,8 +430,8 @@ void move(int n){
     Display();
     int i, dice, step = 0;
     cout << "Press any key to throw the dices...";
-    fflush(stdin);
-    getchar();
+    fflush(stdin);  _getch();
+    cout << endl;
     for(i = 0; i < n; i++){
         dice = rand()%6+1;
         cout << dice << " ";
@@ -464,7 +439,7 @@ void move(int n){
     }
     cout << "=  " << step << " steps" << endl;
     cout << "Press any key to throw move...";
-    getchar();
+    fflush(stdin);  _getch();
     for(i = 0; i < step; i++){
         front->locate = front->locate->next;
         if(front->locate->gettype() == 0 && step - i > 1)   //經過起點
@@ -517,17 +492,17 @@ void setprop(){
                     continue;
                 }
                 if(front->getprop(prop) != 0)  break;
-                cout << "You don't have this prop:";
+                cout << "You don't have this prop, please choose another prop:";
             }while(true);
 
             while(temp->getnumber() != place)   temp = temp->next;
             if(temp->getprop() != NULL){
-                system("CLS");
+                Display();
                 cout << "Prop set failed, there has a prop already!!\n";
             }
             else{
                 temp->setprop(props.Sign(prop));
-                front->addprop(-1, prop);
+                front->addprop(prop, -1);
                 Display();
                 cout << "Prop set successful!\n";
             }
