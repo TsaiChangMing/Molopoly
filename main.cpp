@@ -13,25 +13,28 @@
 
 using namespace std;
 
-struct Prop{
+class Prop{
     private:
-        char sign[3] = {'@', '*', '#'};
-        string name[3] = {"Drug", "Landmine", "Roadblock"};
-        int price[3] = {300, 500, 1000};
+        static char sign[3];
+        static string name[3];
+        static int price[3];
     public:
-        char Sign(int i){
+        static char Sign(int i){
             return sign[i];
         }
-        string Name(int i){
+        static string Name(int i){
             return name[i];
         }
-        int Price(int i){
+        static int Price(int i){
             return price[i];
         }
 };
-Prop props;
+char Prop::sign[]  = {'@', '*', '#'};
+string Prop::name[] = {"Drug", "Landmine", "Roadblock"};
+int Prop::price[] = {300, 500, 1000};
 
-struct infomation{
+
+class infomation{
     private:
         int price[5];   //建設費用
         int tolls[5];   //過路費
@@ -80,7 +83,7 @@ struct infomation{
         }
 };
 
-struct Map{
+class Map{
     private:
         int number;     //編號
         int type;       //起點:0 空地:1 機會:2 命運:3 醫院:4 監獄:5 商店:6
@@ -122,7 +125,7 @@ struct Map{
 Map* head = new Map(0, 0, "起點");
 Map* temp = head;
 
-struct player{
+class player{
     private:
         char id;
         string name;
@@ -137,7 +140,7 @@ struct player{
             name = n;
             money = m;
             stay = 0;
-            for(int k = 0; k < 3; k++)  prop[k] = 0;
+            for(int k = 0; k < 3; k++)  prop[k] = 5;
             locate = head;
             next = NULL;
         }
@@ -180,6 +183,10 @@ player* rear = NULL;
 player* flag = NULL;
 player* out = NULL;
 
+void Display(){
+
+}
+/*
 void Display(){
     temp = head;
     system("CLS");
@@ -231,7 +238,7 @@ void Display(){
     flag = front;
     do{
         for(int i = 0; i < 3; i++)
-            cout << props.Sign(i) << ":" << flag->getprop(i) << " ";
+            cout << Prop::Sign(i) << ":" << flag->getprop(i) << " ";
         cout << "\t";
         flag = flag->next;
     }while(flag != NULL);
@@ -240,7 +247,7 @@ void Display(){
         flag = out;
         do{
             for(int i = 0; i < 3; i++)
-                cout << props.Name(i) << ":" << flag->getprop(i) << " ";
+                cout << Prop::Name(i) << ":" << flag->getprop(i) << " ";
             cout << "\t";
             flag = flag->next;
         }while(flag != NULL);
@@ -286,7 +293,7 @@ void Display(){
     }while(temp != head);
     cout << endl << endl << endl;
 }
-
+*/
 bool createMap(){
     string name;
     int i, j, price[5], tolls[5];
@@ -501,7 +508,7 @@ void setprop(){
                 cout << "Prop set failed, there has a prop already!!\n";
             }
             else{
-                temp->setprop(props.Sign(prop));
+                temp->setprop(Prop::Sign(prop));
                 front->addprop(prop, -1);
                 Display();
                 cout << "Prop set successful!\n";
