@@ -124,6 +124,7 @@ class Map{
 
 Map* head = new Map(0, 0, "起點");
 Map* temp = head;
+int mapCount = 0;
 
 class player{
     private:
@@ -140,7 +141,7 @@ class player{
             name = n;
             money = m;
             stay = 0;
-            for(int k = 0; k < 3; k++)  prop[k] = 5;
+            for(int k = 0; k < 3; k++)  prop[k] = 0;
             locate = head;
             next = NULL;
         }
@@ -178,18 +179,22 @@ class player{
         }
 };
 
+int playerCount = 0;
 player* front = NULL;
 player* rear = NULL;
 player* flag = NULL;
 player* out = NULL;
 
-void Display(){
-
-}
-/*
-void Display(){
+void searchMap(int n){
     temp = head;
+    for(int i = 0; i < n; i++)
+        temp = temp->next;
+}
+
+void Display(){
     system("CLS");
+    int count;
+//display Player information
     cout << endl << "\t\t\t\t\t\t\t\t";
     flag = front;
     do{
@@ -247,7 +252,7 @@ void Display(){
         flag = out;
         do{
             for(int i = 0; i < 3; i++)
-                cout << Prop::Name(i) << ":" << flag->getprop(i) << " ";
+                cout << Prop::Sign(i) << ":" << flag->getprop(i) << " ";
             cout << "\t";
             flag = flag->next;
         }while(flag != NULL);
@@ -255,45 +260,130 @@ void Display(){
 
     cout << endl << front->getname() << "'s turn:" << endl << endl;
 
-    do{
-        if(temp->gettype() == 1){
-            if(temp->info->getowner() != '\0')
-                cout << " " << temp->info->getowner() << temp->info->getlevel()+1 << "   ";
-            else
-                cout << "Lv." << temp->info->getlevel()+1 << "  ";
-        }
-        else    cout << "      ";
-        temp = temp->next;
-    }while(temp != head);
-    cout << endl;
-
-    do{
-        cout << temp->getname() << "  ";
-        temp = temp->next;
-    }while(temp != head);
-    cout << endl;
-
-    do{
-        int count = 0;
+//display Map
+    cout << "\t\t\t";
+    //TOP player and prop location
+    searchMap(mapCount/2);
+    for(int i = 0; i < mapCount/4+1; i++){
+        count = 0;
         if(temp->getprop() != NULL){
             cout << temp->getprop();
             count++;
         }
-
         flag = front;
-        do{
+        for(int j = 0; j < playerCount; j++){
             if(temp->getnumber() == flag->locate->getnumber()){
                 cout << flag->getid();
                 count++;
             }
             flag = flag->next;
-        }while(flag != NULL);
-        for(int i = 0; i < 6-count; i++)    cout << " ";
+        }
+        for(int k = count; k < 16; k++)  cout << " ";
         temp = temp->next;
-    }while(temp != head);
-    cout << endl << endl << endl;
+    }
+    cout << endl << "\t\t\t";
+    //TOP map name
+    searchMap(mapCount/2);
+    for(int i = 0; i < mapCount/4+1; i++){
+        cout << temp->getname() << "\t\t";
+        temp = temp->next;
+    }
+    cout << endl << "\t\t\t";
+    //TOP level
+    searchMap(mapCount/2);
+    for(int i = 0; i < mapCount/4+1; i++){
+        if(temp->gettype() == 1){
+            if(temp->info->getowner() != '\0')
+                cout << " " << temp->info->getowner() << temp->info->getlevel()+1 << "\t\t";
+            else
+                cout << "Lv." << temp->info->getlevel()+1 << "\t\t";
+        }
+        else    cout << "\t\t";
+        temp = temp->next;
+    }
+    cout << endl << "\t\t";
+    //MID
+    for(int i = 0; i < mapCount/4-1; i++){
+        searchMap(mapCount/2-1-i);
+        //左半邊
+        if(temp->getprop() != NULL)
+            cout << temp->getprop();
+        flag = front;
+        for(int j = 0; j < playerCount; j++){
+            if(temp->getnumber() == flag->locate->getnumber())
+                cout << flag->getid();
+            flag = flag->next;
+        }
+        cout << "\t" << temp->getname() << "\t";
+        if(temp->gettype() == 1){
+            if(temp->info->getowner() != '\0')
+                cout << " " << temp->info->getowner() << temp->info->getlevel()+1;
+            else
+                cout << "Lv." << temp->info->getlevel()+1;
+        }
+        cout << "\t\t\t\t\t\t\t\t\t\t\t\t";
+        for(int j = 0; j < mapCount/4+(2 * (i+1)); j++) temp = temp->next;
+        //右半邊
+        if(temp->gettype() == 1){
+            if(temp->info->getowner() != '\0')
+                cout << "" << temp->info->getowner() << temp->info->getlevel()+1 << "    ";
+            else
+                cout << "Lv." << temp->info->getlevel()+1 << "  ";
+        }
+        else    cout << "      ";
+
+        cout << "  " << temp->getname() << "  ";
+
+        if(temp->getprop() != NULL)
+            cout << temp->getprop();
+        flag = front;
+        for(int j = 0; j < playerCount; j++){
+            if(temp->getnumber() == flag->locate->getnumber())
+                cout << flag->getid();
+            flag = flag->next;
+        }
+        cout << endl << endl << "\t\t";
+    }
+    cout << "\t";
+    //BOT level
+    for(int i = mapCount/4; i >= 0; i--){
+        searchMap(i);
+        if(temp->gettype() == 1){
+            if(temp->info->getowner() != '\0')
+                cout << " " << temp->info->getowner() << temp->info->getlevel()+1 << "\t\t";
+            else
+                cout << "Lv." << temp->info->getlevel()+1 << "\t\t";
+        }
+        else    cout << "\t\t";
+    }
+    cout << endl << "\t\t\t";
+    //BOT map name
+    for(int i = mapCount/4; i >= 0; i--){
+        searchMap(i);
+        cout << temp->getname() << "\t\t";
+    }
+    cout << endl << "\t\t\t";
+    //BOT player and prop location
+    for(int i = mapCount/4; i >= 0; i--){
+        searchMap(i);
+        count = 0;
+        if(temp->getprop() != NULL){
+            cout << temp->getprop();
+            count++;
+        }
+        flag = front;
+        for(int k = 0; k < playerCount; k++){
+            if(temp->getnumber() == flag->locate->getnumber()){
+                cout << flag->getid();
+                count++;
+            }
+            flag = flag->next;
+        }
+        for(int k = count; k < 16; k++)  cout << " ";
+    }
+    cout << endl << "\t\t\t";
 }
-*/
+
 bool createMap(){
     string name;
     int i, j, price[5], tolls[5];
@@ -301,7 +391,7 @@ bool createMap(){
     fstream read;
     read.open("map.txt",ios::in);
     if(!read)   return false;
-    for(i = 1; read.getline(in,sizeof(in),'\t'); i++){
+    for(mapCount = 1; read.getline(in,sizeof(in),'\t'); mapCount++){
         name = in;
         for(j = 0; j < 5; j++){
             read.getline(in,sizeof(in),'\t');
@@ -312,23 +402,23 @@ bool createMap(){
             tolls[j] = atoi(in);
         }
         if(price[0] != 0){
-            temp->next = new Map(i,1,name);
+            temp->next = new Map(mapCount,1,name);
             temp = temp->next;
             temp->info = new infomation(price,tolls);
         }
         else{
-            if(name == "機會")    temp->next = new Map(i,2,name);
-            if(name == "命運")    temp->next = new Map(i,3,name);
-            if(name == "醫院")    temp->next = new Map(i,4,name);
-            if(name == "監獄")    temp->next = new Map(i,5,name);
-            if(name == "商店")    temp->next = new Map(i,6,name);
+            if(name == "機會")    temp->next = new Map(mapCount,2,name);
+            if(name == "命運")    temp->next = new Map(mapCount,3,name);
+            if(name == "醫院")    temp->next = new Map(mapCount,4,name);
+            if(name == "監獄")    temp->next = new Map(mapCount,5,name);
+            if(name == "商店")    temp->next = new Map(mapCount,6,name);
             temp = temp->next;
         }
         read.getline(in,sizeof(in),'\n');
     }
     temp->next = head;
     temp = head;
-    if(i % 4 != 0)  return false;
+    if(mapCount % 4 != 0)  return false;
     temp = head;
     return true;
 }
@@ -361,6 +451,10 @@ void act(){
             for(int i = 0; i < 3; i++){
                 cout << "How many " << prop.Name(i) << " do you want to buy?";
                 cin >> c;
+                if(front->getmoney() - prop.Price(i)*(-c) < 0){
+                    cout << "Not enough money to buy the prop!!" << endl;
+                    break;
+                }
                 front->addprop(i,c);
                 front->addmoney(prop.Price(i)*(-c));
             }
@@ -557,16 +651,16 @@ void initialmap(player* o){
 
 int main(){
     srand(time(NULL));
-    int n, m = origiMoney;
+    int m = origiMoney;
     string name;
     if(!createMap()){
         cout << "Loading map failed\n";
         return 0;
     }
     cout << "How many players:";
-    cin >> n;
-    createPlayer(m,n);
-    while(n != 1){
+    cin >> playerCount;
+    createPlayer(m,playerCount);
+    while(playerCount != 1){
         Display();
         if(front->getstay() != 0){
             cout << front->getname() << " still stay " << front->getstay() << " days\n";
@@ -575,7 +669,7 @@ int main(){
         else    setprop();
         if(!switchplayer()){
             initialmap(out);
-            n--;
+            playerCount--;
         }
         system("pause");
     }
