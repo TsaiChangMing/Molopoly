@@ -61,8 +61,8 @@ class infomation{
             owner = o;
         }
 
-        void levelup(){
-            level++;
+        void levelup(int n){
+            level+=n;
         }
 
         int getprice(){
@@ -122,9 +122,10 @@ class Map{
         }
 };
 
+int mapCount = 0;
 Map* head = new Map(0, 0, "起點");
 Map* temp = head;
-int mapCount = 0;
+
 
 class player{
     private:
@@ -469,8 +470,84 @@ void act(){
             front->addmoney(-200);
             break;
         case 3: //Fortune
+            c = rand()%7;
+            switch(c){
+                case 0:
+                    c = rand()%mapCount;
+                    while(temp->getnumber() != c)
+                        temp = temp->next;
+                    cout << "被指派送公文至" << temp->getname() << endl;
+                    front->locate = temp;
+                    break;
+                case 1:
+                    cout << "生日被丟到學思湖裡" << endl;
+                    while(temp->getname() != "學思")
+                        temp = temp->next;
+                    front->locate = temp;
+                case 2:
+                    cout << "不小心走進21步道,媽媽收到21通知單,零用錢扣500元" << endl;
+                    front->addmoney(-500);
+                    break;
+                case 3:
+                    cout << "不小心走進分手步道,右手骨折送醫住院兩天" << endl;
+                    while(temp->getname() != "醫院")
+                        temp = temp->next;
+                    front->locate = temp;
+                    front->addstay(2);
+                    break;
+                case 4:
+                    cout << "期末考快到了,停留一天讀書抱佛腳" << endl;
+                    front->addstay(1);
+                    break;
+                case 5:
+                    cout << "福星小偷來襲,每人各被偷了300元" << endl;
+                    flag = front;
+                    do{
+                        flag->addmoney(-300);
+                        flag = flag->next;
+                    }while(flag != NULL);
+                    break;
+                case 6:
+                    cout << "逢甲清冰哥勇逮福星小偷,歸還每人200元贓款" << endl;
+                    flag = front;
+                    do{
+                        flag->addmoney(200);
+                        flag = flag->next;
+                    }while(flag != NULL);
+                    break;
+                case 7:
+                    c = rand()%mapCount;
+                    while(temp->getnumber() != c)
+                        temp = temp->next;
+                    cout << temp->getname() << "施工中,安全考量加設路障" << endl;
+                    temp->setprop('#');
+                    break;
+                case 8:
+                    do{
+                        c = rand()%mapCount;
+                        while(temp->getnumber() != c)
+                            temp = temp->next;
+                    }while(temp->gettype()!=1);
+                    cout << "校長將簽賭贏得的賭金重點發展在 " << temp->getname() << " 上" << endl;
+                    temp->info->levelup(1);
+                    break;
+                case 9:
+                    do{
+                        c = rand()%mapCount;
+                        while(temp->getnumber() != c)
+                            temp = temp->next;
+                    }while(temp->gettype()!=1);
+                    cout << temp->getname() << " 的實驗室發生意外,損失慘重" << endl;
+                    temp->info->levelup(-1);
+                    break;
+            }
             break;
-        case 2: //Chance
+        case 2: //Chanced
+            c = rand()%2;
+            switch(c){
+                case 1:
+                    cout << "";
+            }
             break;
         case 1: //land
             //無主
@@ -484,7 +561,7 @@ void act(){
                     if(choose == 'y'){
                         front->addmoney(-front->locate->info->getprice());
                         front->locate->info->setowner(front->getid());
-                        front->locate->info->levelup();
+                        front->locate->info->levelup(1);
                     }
                 }
                 else{
@@ -506,7 +583,7 @@ void act(){
                     cin >> choose;
                     if(choose == 'y'){
                         front->addmoney(-front->locate->info->getprice());
-                        front->locate->info->levelup();
+                        front->locate->info->levelup(1);
                     }
                 }
                 else{
