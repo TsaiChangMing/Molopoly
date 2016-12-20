@@ -441,6 +441,62 @@ void createPlayer(int money, int n){
     }
 }
 
+void selectMap(){
+    int num = front->locate->getnumber();
+    char keyboard;
+    Map* sel = front->locate;
+    while(true){
+        cout << "選擇一個位置: " << sel->getname();
+        fflush(stdin);
+        keyboard = _getch();
+        if(keyboard == 's'){
+            num--;
+            if(num < 0) num = mapCount-1;
+            sel = head;
+            for(int i = 0; i < num; i++)
+                sel = sel->next;
+        }
+        else if(keyboard == 'w'){
+            num++;
+            if(num == mapCount)  num = 0;
+            sel = sel->next;
+        }
+        else if(keyboard == '\r'){
+            cout << endl;
+            break;
+        }
+        Display();
+    }
+    temp = sel;
+}
+
+void selectPlayer(){
+    int num = 0;
+    char keyboard;
+    flag = front;
+    while(true){
+        cout << "選擇一位玩家: " << flag->getid();
+        keyboard = _getch();
+        if(keyboard == 's'){
+            num--;
+            if(num < 0) num = playerCount-1;
+            flag = front;
+            for(int i = 0; i < num; i++)
+                flag = flag->next;
+
+        }
+        else if(keyboard == 'w'){
+            num++;
+            if(num = playerCount)   num = 0;
+            flag = flag->next;
+        }
+        else if(keyboard == ' ')
+            break;
+        if(flag == NULL)    flag = front;
+        Display();
+    }
+}
+
 void act(){
     Prop prop;
     int c;
@@ -529,6 +585,7 @@ void act(){
                             temp = temp->next;
                     }while(temp->gettype()!=1);
                     cout << "校長將簽賭贏得的賭金重點發展在 " << temp->getname() << " 上" << endl;
+                    cout << temp->getname() << " 等級上升一級!!" << endl;
                     temp->info->levelup(1);
                     break;
                 case 9:
@@ -538,15 +595,53 @@ void act(){
                             temp = temp->next;
                     }while(temp->gettype()!=1);
                     cout << temp->getname() << " 的實驗室發生意外,損失慘重" << endl;
+                    cout << temp->getname() << " 等級下降一級!!" << endl;
                     temp->info->levelup(-1);
                     break;
             }
             break;
         case 2: //Chanced
-            c = rand()%2;
+            c = rand()%3;
             switch(c){
+                case 0:
+                    cout << "寫信給校長,請他幫忙升級一塊地" << endl;
+                    while(true){
+                        selectMap();
+                        if(temp->gettype() == 1)    break;
+                        cout << "無法升級特殊地標!!" << endl;
+                    }
+                    temp->info->levelup(1);
+                    break;
                 case 1:
-                    cout << "";
+                    cout << "半夜偷偷剪掉某地的總電源線路,損失慘重造成降低一級" << endl;
+                    while(true){
+                        selectMap();
+                        if(temp->gettype() == 1)    break;
+                        cout << "無法攻擊特殊地標!!" << endl;
+                    }
+                    temp->info->levelup(-1);
+                    break;
+                case 2:
+                    cout << "選擇一塊土地,以500元強制徵收該地" << endl;
+                    if(front->getmoney() < 500){
+                        cout << "您的財產不足以徵收任何土地" << endl;
+                        break;
+                    }
+                    while(true){
+                        selectMap();
+                        if(temp->gettype() == 1)    break;
+                        cout << "無法徵收特殊地標!!" << endl;
+                    }
+                    if(temp->info->getowner() != '\0'){
+                        flag = front;
+                        do{
+                            flag = flag->next;
+                        }while(temp->info->getowner() != flag->getid());
+                        flag->addmoney(500);
+                    }
+                    temp->info->setowner(front->getid());
+                    front->addmoney(-500);
+                    break;
             }
             break;
         case 1: //land
@@ -557,7 +652,11 @@ void act(){
                     cout << "After you buy it, you still have " << front->getmoney()-front->locate->info->getprice() << " dollars" << endl;
                     cout << "Wanna buy the land?(y/n):";
                     fflush(stdin);
-                    cin >> choose;
+                    do{
+                        cin >> choose;
+                        if(choose == 'y' || choose == 'n')  break;
+                        cout << "Please enter again:";
+                    }while(true);
                     if(choose == 'y'){
                         front->addmoney(-front->locate->info->getprice());
                         front->locate->info->setowner(front->getid());
@@ -580,7 +679,11 @@ void act(){
                     cout << "After you upgrade it, you still have " << front->getmoney()-front->locate->info->getprice() << " dollars" << endl;
                     cout << "Wanna upgrade the land?(y/n):";
                     fflush(stdin);
-                    cin >> choose;
+                    do{
+                        cin >> choose;
+                        if(choose == 'y' || choose == 'n')  break;
+                        cout << "Please enter again:";
+                    }while(true);
                     if(choose == 'y'){
                         front->addmoney(-front->locate->info->getprice());
                         front->locate->info->levelup(1);
@@ -656,12 +759,7 @@ void setprop(){
         }while(true);
         while(choose == 'y'){
             cout << "Where do you want to put?";
-            do{
-                cin >> place;
-                if(place > -1 && place < 27)  break;
-                cout << "Please enter again:";
-            }while(true);
-
+            selectMap();
             cout << "Whitch prop do you want to put?";
             do{
                 cin >> prop;
@@ -672,8 +770,6 @@ void setprop(){
                 if(front->getprop(prop) != 0)  break;
                 cout << "You don't have this prop, please choose another prop:";
             }while(true);
-
-            while(temp->getnumber() != place)   temp = temp->next;
             if(temp->getprop() != NULL){
                 Display();
                 cout << "Prop set failed, there has a prop already!!\n";
