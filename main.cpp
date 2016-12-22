@@ -5,6 +5,7 @@
 #include <ctime>
 #include <windows.h>
 #include <conio.h>
+#include <sstream>
 
 #define origiMoney 10000
 #define passStart 500
@@ -30,7 +31,7 @@ class Prop{
         }
 };
 char Prop::sign[]  = {'@', '*', '#'};
-string Prop::name[] = {"Drug", "Landmine", "Roadblock"};
+string Prop::name[] = {"毒品", "地雷", "路障"};
 int Prop::price[] = {300, 500, 1000};
 
 
@@ -123,6 +124,7 @@ class Map{
 };
 
 int mapCount = 0;
+int msgArea = 0;
 Map* head = new Map(0, 0, "起點");
 Map* temp = head;
 
@@ -142,7 +144,7 @@ class player{
             name = n;
             money = m;
             stay = 0;
-            for(int k = 0; k < 3; k++)  prop[k] = 0;
+            for(int k = 0; k < 3; k++)  prop[k] = 1;
             locate = head;
             next = NULL;
         }
@@ -190,6 +192,13 @@ void searchMap(int n){
     temp = head;
     for(int i = 0; i < n; i++)
         temp = temp->next;
+}
+
+string* msg;
+void initialMsg(){
+    msg[0] = "\t\t\t\t\t    輪到玩家 " + front->getname() + "\t\t\t\t\t";
+    for(int i = 1; i < msgArea; i++)
+        msg[i] = "\t\t\t\t\t\t\t\t\t\t\t\t";
 }
 
 void Display(){
@@ -322,7 +331,7 @@ void Display(){
             else
                 cout << "Lv." << temp->info->getlevel()+1;
         }
-        cout << "\t\t\t\t\t\t\t\t\t\t\t\t";
+        cout << msg[i];
         for(int j = 0; j < mapCount/4+(2 * (i+1)); j++) temp = temp->next;
         //右半邊
         if(temp->gettype() == 1){
@@ -421,6 +430,8 @@ bool createMap(){
     temp = head;
     if(mapCount % 4 != 0)  return false;
     temp = head;
+    msgArea = mapCount/4-1;     //Create magArea
+    msg = new string[msgArea];
     return true;
 }
 
@@ -441,12 +452,32 @@ void createPlayer(int money, int n){
     }
 }
 
+bool yesORno(string m){
+    bool choose = true;
+    char keyboard;
+    while(true){
+        if(choose)  msg[msgArea/2-1] = "\t\t\t\t      " + m + " 是\t\t\t\t\t";
+        else        msg[msgArea/2-1] = "\t\t\t\t      " + m + " 否\t\t\t\t\t";
+        Display();
+        fflush(stdin);
+        keyboard = _getch();
+        if(keyboard == 's' || keyboard == 'w'){
+            if(choose == true)    choose = false;
+            else                choose = true;
+        }
+        else if(keyboard == '\r'){
+            return choose;
+        }
+    }
+}
+
 void selectMap(){
     int num = front->locate->getnumber();
     char keyboard;
     Map* sel = front->locate;
     while(true){
-        cout << "選擇一個位置: " << sel->getname();
+        msg[msgArea/2] = "\t\t\t\t\t  選擇一個位置:" + sel->getname() + "\t\t\t\t\t";
+        Display();
         fflush(stdin);
         keyboard = _getch();
         if(keyboard == 's'){
@@ -461,11 +492,8 @@ void selectMap(){
             if(num == mapCount)  num = 0;
             sel = sel->next;
         }
-        else if(keyboard == '\r'){
-            cout << endl;
+        else if(keyboard == '\r')
             break;
-        }
-        Display();
     }
     temp = sel;
 }
@@ -475,7 +503,8 @@ void selectPlayer(){
     char keyboard;
     flag = front;
     while(true){
-        cout << "選擇一位玩家: " << flag->getid();
+        Display();
+        cout << msg << "  選擇一位玩家: " << flag->getid();
         keyboard = _getch();
         if(keyboard == 's'){
             num--;
@@ -493,13 +522,34 @@ void selectPlayer(){
         else if(keyboard == ' ')
             break;
         if(flag == NULL)    flag = front;
+    }
+}
+
+int selectProp(){
+    int num = 0;
+    char keyboard;
+    while(true){
+        msg[msgArea/2] = "\t\t\t\t\t  選擇一個道具:" + Prop::Name(num) + "\t\t\t\t\t";
         Display();
+        fflush(stdin);
+        keyboard = _getch();
+        if(keyboard == 's'){
+            num--;
+            if(num < 0) num = 2;
+        }
+        else if(keyboard == 'w'){
+            num++;
+            if(num == 3)  num = 0;
+        }
+        else if(keyboard == '\r')
+            return num;
     }
 }
 
 void act(){
     Prop prop;
     int c;
+    string m;
     char choose;
     switch(front->locate->gettype()){
         case 6: //Store
@@ -604,7 +654,7 @@ void act(){
             c = rand()%3;
             switch(c){
                 case 0:
-                    cout << "寫信給校長,請他幫忙升級一塊地" << endl;
+                    m = "寫信給校長,請他幫忙升級一塊地\n";
                     while(true){
                         selectMap();
                         if(temp->gettype() == 1)    break;
@@ -613,7 +663,7 @@ void act(){
                     temp->info->levelup(1);
                     break;
                 case 1:
-                    cout << "半夜偷偷剪掉某地的總電源線路,損失慘重造成降低一級" << endl;
+                    m = "半夜偷偷剪掉某地的總電源線路,損失慘重造成降低一級\n";
                     while(true){
                         selectMap();
                         if(temp->gettype() == 1)    break;
@@ -622,7 +672,7 @@ void act(){
                     temp->info->levelup(-1);
                     break;
                 case 2:
-                    cout << "選擇一塊土地,以500元強制徵收該地" << endl;
+                    m = "選擇一塊土地,以500元強制徵收該地\n";
                     if(front->getmoney() < 500){
                         cout << "您的財產不足以徵收任何土地" << endl;
                         break;
@@ -708,36 +758,58 @@ void act(){
 }
 
 void move(int n){
-    Display();
+    initialMsg();
+    msg[msgArea/4] = "\t\t\t\t\t    【擲骰移動】\t\t\t\t\t";
+    stringstream ss;
     int i, dice, step = 0;
-    cout << "Press any key to throw the dices...";
+    string toString, diceTotal = "";
+    msg[msgArea/2-1] = "\t\t\t\t\t  按任何鍵擲骰子...\t\t\t\t\t";
+    Display();
     fflush(stdin);  _getch();
-    cout << endl;
+    msg[msgArea/2-1] = "\t\t\t\t\t\t\t\t\t\t\t\t";
     for(i = 0; i < n; i++){
         dice = rand()%6+1;
-        cout << dice << " ";
+        ss << dice; ss >> toString;
+        diceTotal += toString;
+        if(i != n-1)    diceTotal += " + ";
         step += dice;
+        ss.clear();
     }
-    cout << "=  " << step << " steps" << endl;
-    cout << "Press any key to throw move...";
+    ss << step; ss >> toString;
+    diceTotal += (" = " + toString);
+    msg[msgArea/2] = "\t\t\t\t\t     " + diceTotal + "\t\t\t\t\t\t";
+    Display();
+    ss.clear();
+    msg[msgArea/2-1] = "\t\t\t\t\t  按任何鍵開始移動...\t\t\t\t\t";
+    Display();
     fflush(stdin);  _getch();
+    msg[msgArea/2-1] = "\t\t\t\t\t\t\t\t\t\t\t\t";
     for(i = 0; i < step; i++){
         front->locate = front->locate->next;
-        if(front->locate->gettype() == 0 && step - i > 1)   //經過起點
+        if(front->locate->gettype() == 0 && step - i > 1){   //經過起點
+            ss << passStart; ss >> toString;
+            msg[msgArea/2-1] = "\t\t\t\t\t  經過起點,獲得 " + toString + " 元\t\t\t\t\t";
             front->addmoney(passStart);
+            ss.clear();
+        }
+        ss << step-i-1; ss >> toString;
+        msg[msgArea/2+1] = "\t\t\t\t\t         " + toString + "\t\t\t\t\t\t";
         Display();
         if(front->locate->getprop() == '#'){
             front->locate->setprop(NULL);
-            cout << "There is a roadblock in front of you, you have no idea how to pass it\n\n";
+            msg[msgArea/2-1] = "\t\t\t\t       一個路障擋住了你的去路\t\t\t\t\t";
+            Display();
             break;
         }
+        ss.clear();
         Sleep(350);
     }
     cout << "Arrive: " << front->locate->getname() << endl;
     if(front->locate->getprop() == '@'){
         front->locate->setprop(NULL);
         while(front->locate->getname() != "監獄") front->locate = front->locate->next;
-        cout << "A police saw you take a pack of drug, thus you have been sent to prison!!\n\n";
+        msg[msgArea/2-1] = "\t\t\t\t     你撿起一包白白的粉末,碰巧被警察看到...\t\t\t\t\t";
+        Display();
     }
     if(front->locate->getprop() == '*'){
         front->locate->setprop(NULL);
@@ -747,45 +819,40 @@ void move(int n){
 }
 
 void setprop(){
-
+    initialMsg();
+    msg[msgArea/4] = "\t\t\t\t\t    【設置道具】\t\t\t\t\t";
+    string m;
     int prop, place;
-    char choose;
+    bool choose;
     if(front->getprop(0) != 0 || front->getprop(1) != 0 || front->getprop(2) != 0){
-        cout << "Do you want to set props on the map?";
-        do{
-            cin >> choose;
-            if(choose == 'y' || choose == 'n')  break;
-            cout << "Please enter again:";
-        }while(true);
-        while(choose == 'y'){
-            cout << "Where do you want to put?";
-            selectMap();
-            cout << "Whitch prop do you want to put?";
-            do{
-                cin >> prop;
-                if(prop < 0 || prop >2){
-                    cout << "Please enter a number between 0 and 3:";
-                    continue;
-                }
+        m = "是否在地圖上設置道具?";
+        choose = yesORno(m);
+        Display();
+        while(choose){
+            msg[msgArea/2+1] = "\t\t\t\t\t\t\t\t\t\t\t\t";
+            while(true){
+                prop = selectProp();
                 if(front->getprop(prop) != 0)  break;
-                cout << "You don't have this prop, please choose another prop:";
-            }while(true);
-            if(temp->getprop() != NULL){
+                msg[msgArea/2+1] = "\t\t\t\t    你眼睛業障重啊," + Prop::Name(prop) + "什麼的都是假的\t\t\t\t";
                 Display();
-                cout << "Prop set failed, there has a prop already!!\n";
             }
-            else{
-                temp->setprop(Prop::Sign(prop));
-                front->addprop(prop, -1);
+            msg[msgArea/2+1] = "\t\t\t\t\t\t\t\t\t\t\t\t";
+            while(true){
+                selectMap();
+                if(temp->getprop() == NULL) break;
+                msg[msgArea/2+1] = "\t\t\t\t\t    該處已有道具\t\t\t\t\t";
                 Display();
-                cout << "Prop set successful!\n";
             }
-            cout << "Would you want to set another prop?";
-            do{
-                cin >> choose;
-                if(choose == 'y' || choose == 'n')  break;
-                cout << "Please enter again:";
-            }while(true);
+
+            temp->setprop(Prop::Sign(prop));
+            front->addprop(prop, -1);
+            msg[msgArea/2] = "\t\t\t\t\t\t\t\t\t\t\t\t";
+            msg[msgArea/2+1] = "\t\t\t\t\t    道具設置成功\t\t\t\t\t";
+            Display();
+
+            if(front->getprop(0) == 0 && front->getprop(1) == 0 && front->getprop(2) == 0)  break;
+            m = "\t是否繼續設置道具?";
+            choose = yesORno(m);
         }
     }
     move(2);
@@ -830,6 +897,7 @@ int main(){
         cout << "Loading map failed\n";
         return 0;
     }
+    system("CLS");
     cout << "How many players:";
     cin >> playerCount;
     createPlayer(m,playerCount);
