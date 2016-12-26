@@ -199,7 +199,10 @@ class message{
                 content[i] = "\t\t\t\t\t\t\t\t\t\t\t\t";
         }
         void initialMsg(){
-            content[0] = "\t\t\t\t\t    輪到玩家 " + front->getname() + "\t\t\t\t\t";
+            stringstream ss;
+            string toString;
+            ss << front->getid(); ss >> toString;   ss.clear();
+            content[0] = "\t\t\t\t\t     輪到玩家 " + toString + "\t\t\t\t\t\t";
             for(int i = 1; i < msgArea; i++)
                 content[i] = "\t\t\t\t\t\t\t\t\t\t\t\t";
         }
@@ -516,21 +519,32 @@ void selectMap(){
     char keyboard;
     Map* sel = front->locate;
     while(true){
-        msg->setSelect("\t\t\t\t\t  選擇一個位置:" + sel->getname() + "\t\t\t\t\t");
+        if(sel == NULL)
+            msg->setSelect("\t\t\t\t\t  選擇一個位置:取消\t\t\t\t\t");
+        else
+            msg->setSelect("\t\t\t\t\t  選擇一個位置:" + sel->getname() + "\t\t\t\t\t");
         Display();
         fflush(stdin);
         keyboard = _getch();
         if(keyboard == 's'){
             num--;
-            if(num < 0) num = mapCount-1;
-            sel = head;
-            for(int i = 0; i < num; i++)
-                sel = sel->next;
+            if(num < -1) num = mapCount-1;
+
+            if(num == -1)
+                sel = NULL;
+            else{
+                sel = head;
+                for(int i = 0; i < num; i++)
+                    sel = sel->next;
+            }
         }
         else if(keyboard == 'w'){
             num++;
-            if(num == mapCount)  num = 0;
-            sel = sel->next;
+            if(num == mapCount)  num = -1;
+
+            if(num == -1)       sel = NULL;
+            else if(num == 0)   sel = head;
+            else                sel = sel->next;
         }
         else if(keyboard == '\r')
             break;
@@ -592,8 +606,14 @@ void act(){
     int amount = 0, days, prop;
     string toString, String;
     char choose;
-    bool shopping = true;
+    bool shopping = true, allTop = true, allBottom = true;
     msg->initialMsg();
+    temp = head;
+    for(int i = 0; i < mapCount; i++){
+        if(temp->gettype() != 1)    continue;
+        else if(temp->info->getlevel() != -1)   allBottom = false;
+        else if(temp->info->getlevel() !=  4)   allTop = false;
+    }
     switch(front->locate->gettype()){
         case 6: //Store
             msg->setStatus("\t\t\t\t\t    【購買道具】\t\t\t\t\t");
@@ -633,6 +653,7 @@ void act(){
             msg->setImfo("\t\t\t\t      經法官判決後,刑期為 " + toString + " 天\t\t\t\t\t");
             Display();
             front->addstay(amount);
+            fflush(stdin);  _getch();
             break;
         case 4: //Hospital
             msg->setStatus("\t\t\t\t\t    【送醫急救】\t\t\t\t\t");
@@ -640,13 +661,17 @@ void act(){
             ss << amount; ss >> toString;   ss.clear();
             days = 100 * (rand()%4+2); //200~500dollars
             ss << days; ss >> String;     ss.clear();
-            msg->setImfo("\t\t\t      經醫生診斷後,須住院 " + toString + "天, 且支付醫藥費 " + String + "元\t\t\t\t");
+            msg->setImfo("\t\t\t      經醫生診斷後,須住院 " + toString + "天, 且支付醫藥費 " + String + "元\t\t\t");
             Display();
             front->addstay(days);
             front->addmoney(amount);
+            fflush(stdin);  _getch();
             break;
         case 3: //Fortune
-            amount = 1;//rand()%7;
+            msg->setStatus("\t\t\t\t\t      【命運】\t\t\t\t\t\t");
+            do{
+                amount = rand()%10;
+            }while((amount == 8 && allTop) || (amount == 9 && allBottom));
             switch(amount){
                 case 0:
                     amount = rand()%mapCount;
@@ -669,7 +694,7 @@ void act(){
                     front->addmoney(-500);
                     break;
                 case 3:
-                    msg->setImfo("\t\t\t\t\t    不小心走進分手步道,右手骨折送醫住院兩天\t\t\t\t\t");
+                    msg->setImfo("\t\t\t      不小心走進分手步道,右手骨折送醫住院兩天\t\t\t\t");
                     Display();
                     while(temp->getname() != "醫院")
                         temp = temp->next;
@@ -677,12 +702,12 @@ void act(){
                     front->addstay(2);
                     break;
                 case 4:
-                    msg->setImfo("\t\t\t\t\t    期末考快到了,停留一天讀書抱佛腳\t\t\t\t\t");
+                    msg->setImfo("\t\t\t\t    期末考快到了,停留一天讀書抱佛腳\t\t\t\t");
                     Display();
                     front->addstay(1);
                     break;
                 case 5:
-                    msg->setImfo("\t\t\t\t\t    福星小偷來襲,每人各被偷了300元\t\t\t\t\t");
+                    msg->setImfo("\t\t\t\t    福星小偷來襲,每人各被偷了300元\t\t\t\t");
                     Display();
                     flag = front;
                     do{
@@ -691,7 +716,7 @@ void act(){
                     }while(flag != NULL);
                     break;
                 case 6:
-                    msg->setImfo("\t\t\t\t      逢甲清冰哥勇逮福星小偷,歸還每人200元贓款\t\t\t\t\t");
+                    msg->setImfo("\t\t\t      逢甲清冰哥勇逮福星小偷,歸還每人200元贓款\t\t\t\t");
                     Display();
                     flag = front;
                     do{
@@ -703,9 +728,9 @@ void act(){
                     amount = rand()%mapCount;
                     while(temp->getnumber() != amount)
                         temp = temp->next;
-                    msg->setImfo("\t\t\t\t\t    " + temp->getname() + "施工中,安全考量加設路障\t\t\t\t\t");
-                    Display();
+                    msg->setImfo("\t\t\t\t     " + temp->getname() + "施工中,安全考量加設路障\t\t\t\t");
                     temp->setprop('#');
+                    Display();
                     break;
                 case 8:
                     do{
@@ -713,10 +738,10 @@ void act(){
                         while(temp->getnumber() != amount)
                             temp = temp->next;
                     }while(temp->gettype()!=1);
-                    msg->setImfo("\t\t\t\t\t    校長將簽賭贏得的賭金重點發展在 " + temp->getname() + " 上\t\t\t\t\t");
-                    msg->setMark(temp->getname() + " 等級上升一級!!\t\t\t\t\t");
-                    Display();
+                    msg->setImfo("\t\t\t       校長將簽賭贏得的賭金重點發展在 " + temp->getname() + " 上\t\t\t\t");
+                    msg->setMark("\t\t\t\t\t " + temp->getname() + " 等級上升一級!!\t\t\t\t\t");
                     temp->info->levelup(1);
+                    Display();
                     break;
                 case 9:
                     do{
@@ -724,55 +749,68 @@ void act(){
                         while(temp->getnumber() != amount)
                             temp = temp->next;
                     }while(temp->gettype()!=1);
-                    msg->setImfo("\t\t\t\t\t    " + temp->getname() + " 的實驗室發生意外,損失慘重\t\t\t\t\t");
-                    msg->setMark("\t\t\t\t\t    " + temp->getname() + " 等級下降一級!!\t\t\t\t\t");
-                    Display();
+                    msg->setImfo("\t\t\t\t   " + temp->getname() + " 的實驗室發生意外,損失慘重\t\t\t\t");
+                    msg->setMark("\t\t\t\t\t " + temp->getname() + " 等級下降一級!!\t\t\t\t\t");
                     temp->info->levelup(-1);
+                    Display();
                     break;
             }
+            fflush(stdin);  _getch();
             break;
         case 2: //Chanced
-            amount = 1;// rand()%3;
+            msg->setStatus("\t\t\t\t\t      【機會】\t\t\t\t\t\t");
+            do{
+                amount = rand()%3;
+            }while((amount == 0 && allTop) || (amount == 1 && allBottom));
             switch(amount){
                 case 0:
                     msg->setImfo("\t\t\t\t    寫信給校長,請他幫忙升級一塊地\t\t\t\t");
                     while(true){
                         msg->clearMark();
                         selectMap();
-                        if(temp->gettype() != 1)
+                        if(temp == NULL)    break;
+                        else if(temp->gettype() != 1)
                             msg->setMark("\t\t\t\t\t  無法攻擊特殊地標!!\t\t\t\t\t");
                         else if(temp->info->getlevel() == 4)
                             msg->setMark("\t\t\t\t\t  此地等級已達上限!!\t\t\t\t\t");
-                        else    break;
+                        else{
+                            temp->info->levelup(1);
+                            break;
+                        }
                     }
-                    temp->info->levelup(1);
                     break;
                 case 1:
                     msg->setImfo("\t\t\t 半夜偷偷剪掉某地的總電源線路,損失慘重造成降低一級\t\t\t");
                     while(true){
                         selectMap();
-                        if(temp->gettype() != 1)
+                        if(temp == NULL)    break;
+                        else if(temp->gettype() != 1)
                             msg->setMark("\t\t\t\t\t  無法攻擊特殊地標!!\t\t\t\t\t");
                         else if(temp->info->getlevel() <= 0)
                             msg->setMark("\t\t\t\t\t    無法降級空地!!\t\t\t\t\t");
-                        else    break;
+                        else if(temp->info->getowner() == front->getid())
+                            msg->setMark("\t\t\t\t\t 你已擁有此地所有權!!\t\t\t\t\t");
+                        else{
+                            temp->info->levelup(-1);
+                            break;
+                        }
                     }
-                    temp->info->levelup(-1);
                     break;
                 case 2:
-                    msg->setImfo("\t\t\t\t\t    選擇一塊土地,以500元強制徵收該地\t\t\t\t\t");
+                    msg->setImfo("\t\t\t\t  選擇一塊土地,以500元強制徵收該地\t\t\t\t");
                     if(front->getmoney() < 500){
-                        msg->setSelect("\t\t\t\t\t    您的財產不足以徵收任何土地\t\t\t\t\t");
+                        msg->setSelect("\t\t\t\t     您的財產不足以徵收任何土地\t\t\t\t\t");
                         Display();
                         break;
                     }
                     while(true){
-                        msg->clearMark();
                         selectMap();
-                        if(temp->gettype() == 1)    break;
-                        msg->setMark("\t\t\t\t\t    無法徵收特殊地標!!\t\t\t\t\t");
+                        if(temp == NULL)    break;
+                        else if(temp->gettype() == 1)    break;
+                        msg->setMark("\t\t\t\t\t  無法徵收特殊地標!!\t\t\t\t\t");
                     }
-                    if(temp->info->getowner() != '\0'){
+                    if(temp == NULL)    break;
+                    else if(temp->info->getowner() != '\0'){
                         flag = front;
                         do{
                             flag = flag->next;
@@ -788,62 +826,69 @@ void act(){
         case 1: //land
             //無主
             if(front->locate->info->getowner() == '\0'){
+                msg->setStatus("\t\t\t\t\t    【購買土地】\t\t\t\t\t");
                 if(front->getmoney() > front->locate->info->getprice()){
-                    cout << "This land's price is " << front->locate->info->getprice() << endl;
-                    cout << "After you buy it, you still have " << front->getmoney()-front->locate->info->getprice() << " dollars" << endl;
-                    cout << "Wanna buy the land?(y/n):";
-                    fflush(stdin);
-                    do{
-                        cin >> choose;
-                        if(choose == 'y' || choose == 'n')  break;
-                        cout << "Please enter again:";
-                    }while(true);
-                    if(choose == 'y'){
+                    ss << front->locate->info->getprice(); ss >> toString;   ss.clear();
+                    msg->setImfo("\t\t\t\t\t 此地售價為 " + toString + " 元\t\t\t\t\t");
+                    ss << front->getmoney() - front->locate->info->getprice(); ss >> toString;   ss.clear();
+                    msg->setMark("\t\t\t\t\t購買之後餘額: " + toString + " 元\t\t\t\t\t");
+                    choose = yesORno("\t  是否購買此地?");
+                    if(choose){
                         front->addmoney(-front->locate->info->getprice());
                         front->locate->info->setowner(front->getid());
                         front->locate->info->levelup(1);
                     }
                 }
                 else{
-                    cout << "Not enough money to buy the land" << endl;
-                    cout << "land price :" << front->locate->info->getprice() << endl;
+                    ss << front->locate->info->getprice(); ss >> toString;   ss.clear();
+                    msg->setImfo("\t\t\t\t\t 此地售價為 " + toString + " 元\t\t\t\t\t");
+                    msg->setSelect("\t\t\t\t\t    您的財產不足\t\t\t\t\t");
+                    Display();
+                    fflush(stdin);  _getch();
                 }
 
             }
             //為主
             else if(front->locate->info->getowner() == front->getid()){
+                msg->setStatus("\t\t\t\t\t    【升級土地】\t\t\t\t\t");
                 if(front->locate->info->getlevel() == 5){
-                    cout << "The level is highest!!" << endl;
+                    msg->setImfo("\t\t\t\t\t   此地等級已最高\t\t\t\t\t");
+                    Display();
+                    fflush(stdin);  _getch();
                 }
                 else if(front->getmoney() > front->locate->info->getprice()){
-                    cout << "Upgrade this land's price is " << front->locate->info->getprice() << " dollars" << endl;
-                    cout << "After you upgrade it, you still have " << front->getmoney()-front->locate->info->getprice() << " dollars" << endl;
-                    cout << "Wanna upgrade the land?(y/n):";
-                    fflush(stdin);
-                    do{
-                        cin >> choose;
-                        if(choose == 'y' || choose == 'n')  break;
-                        cout << "Please enter again:";
-                    }while(true);
-                    if(choose == 'y'){
+                    ss << front->locate->info->getprice(); ss >> toString;   ss.clear();
+                    msg->setImfo("\t\t\t\t\t 升級費用為 " + toString + " 元\t\t\t\t\t");
+                    ss << front->getmoney() - front->locate->info->getprice(); ss >> toString;   ss.clear();
+                    msg->setMark("\t\t\t\t\t升級之後餘額: " + toString + " 元\t\t\t\t\t");
+                    choose = yesORno("\t  是否升級此地?");
+                    if(choose){
                         front->addmoney(-front->locate->info->getprice());
                         front->locate->info->levelup(1);
                     }
                 }
                 else{
-                    cout << "Not enough money to upgrade the land" << endl;
-                    cout << "land price :" << front->locate->info->getprice() << endl;
+                    ss << front->locate->info->getprice(); ss >> toString;   ss.clear();
+                    msg->setImfo("\t\t\t\t\t 升級費用為 " + toString + " 元\t\t\t\t\t");
+                    msg->setSelect("\t\t\t\t\t    您的財產不足\t\t\t\t\t");
+                    Display();
+                    fflush(stdin);  _getch();
                 }
             }
             //他主
             else if(front->locate->info->getowner() != '\0'){
+                msg->setStatus("\t\t\t\t\t    【付過路費】\t\t\t\t\t");
                 front->addmoney(-front->locate->info->gettolls());
                 flag = front;
                 while(flag->getid() != front->locate->info->getowner())
                     flag = flag->next;
                 flag->addmoney(front->locate->info->gettolls());
-                cout << "The land is belong to " << front->locate->info->getowner() << endl;
-                cout << "You should pay " << front->locate->info->gettolls() << " dollars" << endl;
+                ss << front->locate->info->getowner(); ss >> toString;   ss.clear();
+                msg->setImfo("\t\t\t\t\t     此地屬於 " + toString + "\t\t\t\t\t\t");
+                ss << front->locate->info->gettolls(); ss >> toString;   ss.clear();
+                msg->setSelect("\t\t\t\t\t您必須付過路費 " + toString + " 元\t\t\t\t\t");
+                Display();
+                fflush(stdin);  _getch();
             }
     }
 }
@@ -892,17 +937,19 @@ void move(int n){
         }
         Sleep(350);
     }
-    msg->setMark("Arrive: " + front->locate->getname());
     if(front->locate->getprop() == '@'){
         front->locate->setprop(NULL);
         while(front->locate->getname() != "監獄") front->locate = front->locate->next;
-        msg->setImfo("\t\t\t\t     你撿起一包白白的粉末,碰巧被警察看到...\t\t\t\t\t");
+        msg->setImfo("\t\t\t\t你撿起一包白白的粉末,碰巧被警察看到...\t\t\t\t");
         Display();
         fflush(stdin);  _getch();
     }
     if(front->locate->getprop() == '*'){
         front->locate->setprop(NULL);
+        msg->setImfo("\t\t\t  你不小心踩到一個凸凸的東西,腳下就開始放起煙火了...\t\t\t");
+        Display();
         while(front->locate->getname() != "醫院") front->locate = front->locate->next;
+        fflush(stdin);  _getch();
     }
     act();
 }
@@ -910,12 +957,10 @@ void move(int n){
 void setprop(){
     msg->initialMsg();
     msg->setStatus("\t\t\t\t\t    【設置道具】\t\t\t\t\t");
-    string m;
     int prop, place;
     bool setting;
     if(front->getprop(0) != 0 || front->getprop(1) != 0 || front->getprop(2) != 0){
-        m = "是否在地圖上設置道具?";
-        setting = yesORno(m);
+        setting = yesORno("是否在地圖上設置道具?");
         Display();
         while(setting){
             msg->clearMark();
@@ -933,7 +978,11 @@ void setprop(){
             msg->clearMark();
             while(setting){
                 selectMap();
-                if(temp->getprop() == NULL) break;
+                if(temp == NULL){
+                    setting = false;
+                    break;
+                }
+                else if(temp->getprop() == NULL) break;
                 msg->setMark("\t\t\t\t\t    該處已有道具\t\t\t\t\t");
                 Display();
             }
@@ -945,8 +994,7 @@ void setprop(){
                 Display();
             }
             if(front->getprop(0) == 0 && front->getprop(1) == 0 && front->getprop(2) == 0)  break;
-            m = "\t是否繼續設置道具?";
-            setting = yesORno(m);
+            setting = yesORno("\t是否繼續設置道具?");
         }
     }
     move(2);
@@ -986,19 +1034,24 @@ void initialmap(player* o){
 int main(){
     srand(time(NULL));
     int m = origiMoney;
-    string name;
+    stringstream ss;
+    string name, toString;
     if(!createMap()){
-        cout << "Loading map failed\n";
+        cout << "Loading map failed...\n";
         return 0;
     }
     system("CLS");
     cout << "How many players:";
     cin >> playerCount;
     createPlayer(m,playerCount);
+
     while(playerCount != 1){
         Display();
         if(front->getstay() != 0){
-            cout << front->getname() << " still stay " << front->getstay() << " days\n";
+            ss << front->getstay(); ss >> toString;   ss.clear();
+            ss << front->getid(); ss >> name;   ss.clear();
+            msg->setImfo("\t\t\t\t\t    " + name + " 還須待 " + toString + " 天\t\t\t\t\t");
+            Display();
             front->addstay(-1);
         }
         else    setprop();
@@ -1006,9 +1059,6 @@ int main(){
             initialmap(out);
             playerCount--;
         }
-        //pause
-        fflush(stdin);
-        _getch();
     }
     Display();
     return 0;
