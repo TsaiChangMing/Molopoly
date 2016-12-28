@@ -6,13 +6,87 @@
 #include <windows.h>
 #include <conio.h>
 #include <sstream>
+#include <fstream>
 
-#define origiMoney 10000
+#define origiMoney 5000
 #define passStart 500
 #define stayPrison 3
 #define stayHospital 1
 
 using namespace std;
+
+void SetColor(int color = 7){
+    HANDLE hConsole;
+    hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole,color);
+}
+
+void antiWhite(bool select){
+    if(select)
+        SetColor(137);
+    else
+        SetColor(113);
+}
+
+void textColor(char owner = '\0'){
+    switch(owner){
+        case 'A':
+            SetColor(121);   //79
+            break;
+        case 'B':
+            SetColor(124);   //7C
+            break;
+        case 'C':
+            SetColor(114);   //72
+            break;
+        case 'D':
+            SetColor(117);   //7E
+            break;
+        default:
+            SetColor(112);
+    }
+}
+
+void boardColor(char owner = '\0'){
+    switch(owner){
+        case 'A':
+            SetColor(249);   //79
+            break;
+        case 'B':
+            SetColor(252);   //7C
+            break;
+        case 'C':
+            SetColor(242);   //72
+            break;
+        case 'D':
+            SetColor(245);   //7E
+            break;
+        default:
+            SetColor(112);
+    }
+}
+
+void levelColor(int level = -1){
+    switch(level){
+        case 0:
+            SetColor(128);
+            break;
+        case 1:
+            SetColor(48);
+            break;
+        case 2:
+            SetColor(176);
+            break;
+        case 3:
+            SetColor(80);
+            break;
+        case 4:
+            SetColor(192);
+            break;
+        default:
+            SetColor(112);
+    }
+}
 
 class Prop{
     private:
@@ -33,7 +107,6 @@ class Prop{
 char Prop::sign[]  = {'@', '*', '#'};
 string Prop::name[] = {"毒品", "地雷", "路障"};
 int Prop::price[] = {300, 500, 1000};
-
 
 class infomation{
     private:
@@ -138,12 +211,12 @@ class player{
     public:
         Map* locate;
         player* next;
-        player(char i, string n, int m){
+        player(char i, string n){
             id = i;
             name = n;
-            money = m;
+            money = origiMoney;
             stay = 0;
-            for(int k = 0; k < 3; k++)  prop[k] = 2;
+            for(int k = 0; k < 3; k++)  prop[k] = 0;
             locate = head;
             next = NULL;
         }
@@ -186,6 +259,53 @@ player* front = NULL;
 player* rear = NULL;
 player* flag = NULL;
 player* out = NULL;
+
+struct Leaderboard{
+    player* P;
+    Leaderboard* L;
+    Leaderboard* R;
+    Leaderboard(player* p){
+        P = p;
+        L = NULL;
+        R = NULL;
+    }
+};
+
+Leaderboard* root = NULL;
+Leaderboard* ptr = NULL;
+
+void push(player* p){
+    if(root == NULL){
+        root = new Leaderboard(p);
+    }
+    else{
+        ptr = root;
+        while(true){
+            if(p->getmoney() > ptr->P->getmoney() && ptr->R != NULL){
+                ptr = ptr->R;
+            }
+            else if(p->getmoney() <= ptr->P->getmoney() && ptr->L != NULL){
+                ptr = ptr->L;
+            }
+            else if(p->getmoney() > ptr->P->getmoney() && ptr->R == NULL){
+                ptr->R = new Leaderboard(p);
+                break;
+            }
+            else if(p->getmoney() <= ptr->P->getmoney() && ptr->L == NULL){
+                ptr->L = new Leaderboard(p);
+                break;
+            }
+        }
+    }
+}
+
+void printRank(Leaderboard* LB){
+    if(LB != NULL){
+        printRank(LB->R);
+        cout << "\t\t\t\t\t\t\t\t\t" << LB->P->getname() << "\t\t\t" << LB->P->getmoney() << endl << endl;
+        printRank(LB->L);
+    }
+}
 
 class message{
     private:
@@ -243,14 +363,14 @@ void searchMap(int n){
         temp = temp->next;
 }
 
-
 void Display(){
     system("CLS");
     int count;
 //display Player information
-    cout << endl << "\t\t\t\t\t\t\t\t";
+    cout << endl << "\t\t\t\t\t\t";
     flag = front;
     do{
+        textColor(flag->getid());
         cout << flag->getid() << "\t\t";
         flag = flag->next;
     }while(flag != NULL);
@@ -258,14 +378,16 @@ void Display(){
     if(out != NULL){
         flag = out;
         do{
+            textColor(flag->getid());
             cout << flag->getid() << "\t\t";
             flag = flag->next;
         }while(flag != NULL);
     }
-    cout << endl << "\t\t\t\t\t\t\t\t";
+    cout << endl << "\t\t\t\t\t\t";
 
     flag = front;
     do{
+        textColor(flag->getid());
         cout << flag->getname() << "\t\t";
         flag = flag->next;
     }while(flag != NULL);
@@ -273,14 +395,16 @@ void Display(){
     if(out != NULL){
         flag = out;
         do{
+            textColor(flag->getid());
             cout << flag->getname() << "\t\t";
             flag = flag->next;
         }while(flag != NULL);
     }
-    cout << endl << "\t\t\t\t\t\t\t\t";
+    cout << endl << "\t\t\t\t\t\t";
 
     flag = front;
     do{
+        textColor(flag->getid());
         cout << flag->getmoney() << "\t\t";
         flag = flag->next;
     }while(flag != NULL);
@@ -288,13 +412,15 @@ void Display(){
     if(out != NULL){
         flag = out;
         do{
+            textColor(flag->getid());
             cout << flag->getmoney() << "\t\t";
             flag = flag->next;
         }while(flag != NULL);
     }
-    cout << endl << "\t\t\t\t\t\t\t\t";
+    cout << endl << "\t\t\t\t\t\t";
     flag = front;
     do{
+        textColor(flag->getid());
         for(int i = 0; i < 3; i++)
             cout << Prop::Sign(i) << ":" << flag->getprop(i) << " ";
         cout << "\t";
@@ -304,6 +430,7 @@ void Display(){
     if(out != NULL){
         flag = out;
         do{
+            textColor(flag->getid());
             for(int i = 0; i < 3; i++)
                 cout << Prop::Sign(i) << ":" << flag->getprop(i) << " ";
             cout << "\t";
@@ -311,50 +438,61 @@ void Display(){
         }while(flag != NULL);
     }
 
-    cout << endl << front->getname() << "'s turn:" << endl << endl;
-
 //display Map
-    cout << "\t\t\t";
+    cout << endl << endl << "\t\t";
     //TOP player and prop location
     searchMap(mapCount/2);
     for(int i = 0; i < mapCount/4+1; i++){
         count = 0;
         if(temp->getprop() != NULL){
+            textColor();
             cout << temp->getprop();
             count++;
         }
         flag = front;
         for(int j = 0; j < playerCount; j++){
             if(temp->getnumber() == flag->locate->getnumber()){
+                boardColor(flag->getid());
                 cout << flag->getid();
                 count++;
             }
             flag = flag->next;
         }
+        textColor();
         for(int k = count; k < 16; k++)  cout << " ";
         temp = temp->next;
     }
-    cout << endl << "\t\t\t";
+    cout << endl << "\t\t";
     //TOP map name
     searchMap(mapCount/2);
     for(int i = 0; i < mapCount/4+1; i++){
+        if(temp->gettype() == 1)
+            textColor(temp->info->getowner());
+        else
+            textColor();
         cout << temp->getname() << "\t\t";
         temp = temp->next;
     }
-    cout << endl << "\t\t\t";
+    cout << endl << "\t\t";
     //TOP level
     searchMap(mapCount/2);
     for(int i = 0; i < mapCount/4+1; i++){
+        levelColor();
         if(temp->gettype() == 1){
-            if(temp->info->getowner() != '\0')
-                cout << " " << temp->info->getowner() << temp->info->getlevel()+1 << "\t\t";
-            else
+            if(temp->info->getowner() != '\0'){
+                cout << " " ;
+                levelColor(temp->info->getlevel());
+                cout << temp->info->getowner() << temp->info->getlevel()+1 << "\t\t";
+            }
+            else{
+                levelColor();
                 cout << "Lv." << temp->info->getlevel()+1 << "\t\t";
+            }
         }
         else    cout << "\t\t";
         temp = temp->next;
     }
-    cout << endl << "\t\t";
+    cout << endl << "\t";
     //MID
     for(int i = 0; i < mapCount/4-1; i++){
         searchMap(mapCount/2-1-i);
@@ -363,59 +501,100 @@ void Display(){
             cout << temp->getprop();
         flag = front;
         for(int j = 0; j < playerCount; j++){
+            boardColor(flag->getid());
             if(temp->getnumber() == flag->locate->getnumber())
                 cout << flag->getid();
             flag = flag->next;
         }
+        textColor();
+        if(temp->gettype() == 1)
+            textColor(temp->info->getowner());
+        else
+            textColor();
         cout << "\t" << temp->getname() << "\t";
         if(temp->gettype() == 1){
-            if(temp->info->getowner() != '\0')
-                cout << " " << temp->info->getowner() << temp->info->getlevel()+1;
-            else
+            levelColor();
+            if(temp->info->getowner() != '\0'){
+                cout << " ";
+                levelColor(temp->info->getlevel());
+                cout << temp->info->getowner() << temp->info->getlevel()+1;
+            }
+            else{
+                levelColor();
                 cout << "Lv." << temp->info->getlevel()+1;
+            }
         }
+        textColor();
         cout << msg->getMsg(i);
-        for(int j = 0; j < mapCount/4+(2 * (i+1)); j++) temp = temp->next;
         //右半邊
+        for(int j = 0; j < mapCount/4+(2 * (i+1)); j++)
+            temp = temp->next;
+
         if(temp->gettype() == 1){
-            if(temp->info->getowner() != '\0')
-                cout << "" << temp->info->getowner() << temp->info->getlevel()+1 << "    ";
-            else
+            if(temp->info->getowner() != '\0'){
+                levelColor();
+                cout << "";
+                levelColor(temp->info->getlevel());
+                cout << temp->info->getowner() << temp->info->getlevel()+1;
+                levelColor();
+                cout << "    ";
+            }
+            else{
+                levelColor();
                 cout << "Lv." << temp->info->getlevel()+1 << "  ";
+            }
         }
         else    cout << "      ";
-
-        cout << "  " << temp->getname() << "  ";
+        cout << "  ";
+        if(temp->gettype() == 1)
+            textColor(temp->info->getowner());
+        else
+            textColor();
+        cout << temp->getname();
+        textColor();
+        cout << "  ";
 
         if(temp->getprop() != NULL)
             cout << temp->getprop();
         flag = front;
         for(int j = 0; j < playerCount; j++){
+            boardColor(flag->getid());
             if(temp->getnumber() == flag->locate->getnumber())
                 cout << flag->getid();
             flag = flag->next;
         }
-        cout << endl << endl << "\t\t";
+        textColor();
+        cout << endl << endl << "\t";
     }
     cout << "\t";
     //BOT level
     for(int i = mapCount/4; i >= 0; i--){
         searchMap(i);
         if(temp->gettype() == 1){
-            if(temp->info->getowner() != '\0')
-                cout << " " << temp->info->getowner() << temp->info->getlevel()+1 << "\t\t";
-            else
+            if(temp->info->getowner() != '\0'){
+                levelColor();
+                cout << " ";
+                levelColor(temp->info->getlevel());
+                cout << temp->info->getowner() << temp->info->getlevel()+1 << "\t\t";
+            }
+            else{
+                levelColor();
                 cout << "Lv." << temp->info->getlevel()+1 << "\t\t";
+            }
         }
         else    cout << "\t\t";
     }
-    cout << endl << "\t\t\t";
+    cout << endl << "\t\t";
     //BOT map name
     for(int i = mapCount/4; i >= 0; i--){
         searchMap(i);
+        if(temp->gettype() == 1)
+            textColor(temp->info->getowner());
+        else
+            textColor();
         cout << temp->getname() << "\t\t";
     }
-    cout << endl << "\t\t\t";
+    cout << endl << "\t\t";
     //BOT player and prop location
     for(int i = mapCount/4; i >= 0; i--){
         searchMap(i);
@@ -426,20 +605,22 @@ void Display(){
         }
         flag = front;
         for(int k = 0; k < playerCount; k++){
+            boardColor(flag->getid());
             if(temp->getnumber() == flag->locate->getnumber()){
                 cout << flag->getid();
                 count++;
             }
             flag = flag->next;
         }
+        textColor();
         for(int k = count; k < 16; k++)  cout << " ";
     }
-    cout << endl << "\t\t\t";
+    cout << endl << "\t\t";
 }
 
 bool createMap(){
     string name;
-    int i, j, price[5], tolls[5];
+    int j, price[5], tolls[5];
     char in[100];
     fstream read;
     read.open("map.txt",ios::in);
@@ -478,25 +659,19 @@ bool createMap(){
     return true;
 }
 
-void createPlayer(int money, int n){
-    string name;
-    cout << "Enter player's name" << endl;
-    for(int i = 0; i < n; i++){
-        cout << "P" << i+1 << ":";
-        cin >> name;
-        if(i == 0){
-            front = new player(i+65,name,money);
-            rear = front;
-        }
-        else{
-            rear->next = new player(i+65,name,money);
-            rear = rear->next;
-        }
+void createPlayer(int i, string name){
+    if(front == NULL){
+        front = new player(i+65,name);
+        rear = front;
+    }
+    else{
+        rear->next = new player(i+65,name);
+        rear = rear->next;
     }
 }
 
 bool yesORno(string m){
-    bool choose = false;
+    bool choose = true;
     char keyboard;
     while(true){
         if(choose)  msg->setSelect("\t\t\t\t      " + m + " 是\t\t\t\t\t");
@@ -638,10 +813,12 @@ void act(){
                         amount--;
                         if(amount < 0)  amount = front->getmoney() / Prop::Price(prop);
                     }
-                    else if(choose == '\r') break;
+                    else if(choose == '\r'){
+                        front->addprop(prop,amount);
+                        front->addmoney(Prop::Price(prop)*(-amount));
+                        break;
+                    }
                 }
-                front->addprop(prop,amount);
-                front->addmoney(Prop::Price(prop)*(-amount));
             }
             break;
         case 5: //Prison
@@ -657,14 +834,14 @@ void act(){
             break;
         case 4: //Hospital
             msg->setStatus("\t\t\t\t\t    【送醫急救】\t\t\t\t\t");
-            amount = rand()%4+2; //2~5days
-            ss << amount; ss >> toString;   ss.clear();
-            days = 100 * (rand()%4+2); //200~500dollars
-            ss << days; ss >> String;     ss.clear();
+            days = rand()%4+2; //2~5days
+            ss << days; ss >> toString;   ss.clear();
+            amount = 100 * (rand()%4+2); //200~500dollars
+            ss << amount; ss >> String;     ss.clear();
             msg->setImfo("\t\t\t      經醫生診斷後,須住院 " + toString + "天, 且支付醫藥費 " + String + "元\t\t\t");
             Display();
             front->addstay(days);
-            front->addmoney(amount);
+            front->addmoney(-amount);
             fflush(stdin);  _getch();
             break;
         case 3: //Fortune
@@ -914,9 +1091,9 @@ void move(int n){
     diceTotal += (" = " + toString);
     msg->setSelect("\t\t\t\t\t     " + diceTotal + "\t\t\t\t\t\t");
     Display();
-    msg->setImfo("\t\t\t\t\t  按任何鍵開始移動...\t\t\t\t\t");
-    Display();
-    fflush(stdin);  _getch();
+    //msg->setImfo("\t\t\t\t\t  按任何鍵開始移動...\t\t\t\t\t");
+    //Display();
+    //fflush(stdin);  _getch();
     msg->clearImfo();
     for(i = 0; i < step; i++){
         front->locate = front->locate->next;
@@ -957,7 +1134,7 @@ void move(int n){
 void setprop(){
     msg->initialMsg();
     msg->setStatus("\t\t\t\t\t    【設置道具】\t\t\t\t\t");
-    int prop, place;
+    int prop;
     bool setting;
     if(front->getprop(0) != 0 || front->getprop(1) != 0 || front->getprop(2) != 0){
         setting = yesORno("是否在地圖上設置道具?");
@@ -1012,6 +1189,7 @@ bool switchplayer(){
             flag->next = out;
             out = flag;
         }
+        push(flag);
         return false;
     }
     else{
@@ -1031,35 +1209,172 @@ void initialmap(player* o){
     }while(temp != head);
 }
 
+void startScreen(){
+    fstream start1, start2, set;
+    char print[1024];
+    int choose = 1;
+    string name[4];
+    while(true){
+        start1.open("Start1.txt",ios::in);
+        start2.open("Start2.txt",ios::in);
+        while(start1.getline(print,sizeof(print),'\n')){
+            cout<<print<<endl;
+        }
+        if(kbhit()) break;
+        Sleep(500);
+        system("CLS");
+        while(start2.getline(print,sizeof(print),'\n')){
+            cout<<print<<endl;
+        }
+        Sleep(500);
+        system("CLS");
+        start1.close();
+        start2.close();
+    }
+    for(int i = 0; i < 12; i++){
+        cout << endl;
+        Sleep(50);
+    }
+    _getch();
+    while(true){
+        if(playerCount == 0)    choose = 1;
+        system("color 71");
+        system("CLS");
+        cout << choose << " " << playerCount;
+        set.open("Set.txt",ios::in);
+        while(set.getline(print,sizeof(print),'\n')){
+            cout<<print<<endl;
+        }
+        set.close();
+        cout << endl << endl << "\t\t\t\t\t\t\t\t\t\t";
+        antiWhite(choose == 0);
+        if(playerCount < 2) SetColor(120);
+        cout << "開始遊戲";
+        cout << endl << endl << "\t\t\t\t\t\t\t\t\t\t";
+        antiWhite(choose == 1);
+        if(playerCount == 4) SetColor(120);
+        cout << "新增角色";
+        cout << endl << endl << "\t\t\t\t\t\t\t\t\t\t";
+        antiWhite(choose == 2);
+        if(playerCount == 0) SetColor(120);
+        cout << "刪除角色";
+        antiWhite(false);
+        cout << endl << endl << endl << "\t\t\t\t\t\t   ";
+        for(int i = 0; i < playerCount; i++)
+            cout << "P" << i+1 << ": " << name[i] << "\t\t";
+        fflush(stdin);
+        switch(_getch()){
+            case 's':
+                choose++;
+                if(choose == 3) choose = 0;
+                if(choose == 0 && playerCount < 2)  choose = 1;
+                if(choose == 1 && playerCount == 4) choose = 2;
+                break;
+            case 'w':
+                choose--;
+                if(choose == 0 && playerCount < 2)  choose = 2;
+                if(choose == -1) choose = 2;
+                if(choose == 1 && playerCount == 4)    choose = 0;
+                break;
+            case '\r':
+                if(choose == 0){
+                    for(int i = 0; i < playerCount; i++)
+                        createPlayer(i, name[i]);
+                    return;
+                }
+                if(choose == 2) playerCount--;
+                if(choose == 1){
+                    cout << "P" << playerCount+1 << ": ";
+                    cin >> name[playerCount];
+                    playerCount++;
+                    if(playerCount == 4)    choose = 0;
+                }
+                break;
+        }
+    }
+    _getch();
+    start1.close();
+    start2.close();
+}
+
+bool endScreen(){
+    int color = 112;
+    bool choose = false;
+    fstream gg;
+    char print[1024];
+    while(true){
+        system("CLS");
+        cout << endl << endl << endl;
+        gg.open("gameover.txt",ios::in);
+        while(gg.getline(print,sizeof(print),'\n')){
+            if(print[0] == '.'){
+                SetColor(119);
+                color--;
+            }
+            else
+                SetColor(color);
+            cout<<print<<endl;
+            color++;    if(color == 119)    color = 112;
+        }
+        gg.close();
+        color++;    if(color == 119)    color = 112;
+        cout << endl << endl << "\t\t\t\t\t\t\t\t\t\t";
+        antiWhite(choose == 0);
+        cout << "開新遊戲";
+        cout << endl << endl << "\t\t\t\t\t\t\t\t\t\t";
+        antiWhite(choose == 1);
+        cout << "離開遊戲";
+        cout << endl << endl << "\t\t\t\t\t\t\t\t\t\t";
+        antiWhite(false);
+        cout << "-排行榜-" << endl;
+        printRank(root);
+        fflush(stdin);
+        if(kbhit()){
+            switch(_getch()){
+                case 's':
+                case 'w':
+                    if(choose == true)  choose = false;
+                    else    choose = true;
+                    break;
+                case '\r':
+                    return choose;
+            }
+        }
+        Sleep(150);
+    }
+}
+
 int main(){
+    bool play = true;
     srand(time(NULL));
-    int m = origiMoney;
     stringstream ss;
     string name, toString;
-    if(!createMap()){
-        cout << "Loading map failed...\n";
-        return 0;
-    }
-    system("CLS");
-    cout << "How many players:";
-    cin >> playerCount;
-    createPlayer(m,playerCount);
-
-    while(playerCount != 1){
-        Display();
-        if(front->getstay() != 0){
-            ss << front->getstay(); ss >> toString;   ss.clear();
-            ss << front->getid(); ss >> name;   ss.clear();
-            msg->setImfo("\t\t\t\t\t    " + name + " 還須待 " + toString + " 天\t\t\t\t\t");
+    system("color 71");
+    while(play){
+        startScreen();
+        if(!createMap()){
+            cout << "Loading map failed...\n";
+            return 0;
+        }
+        while(playerCount > 1){
+            system("color 70");
             Display();
-            front->addstay(-1);
+            if(front->getstay() != 0){
+                ss << front->getstay(); ss >> toString;   ss.clear();
+                ss << front->getid(); ss >> name;   ss.clear();
+                msg->setImfo("\t\t\t\t\t    " + name + " 還須待 " + toString + " 天\t\t\t\t\t");
+                Display();
+                fflush(stdin);  _getch();
+                front->addstay(-1);
+            }
+            else    setprop();
+            if(!switchplayer()){
+                initialmap(out);
+                playerCount--;
+            }
         }
-        else    setprop();
-        if(!switchplayer()){
-            initialmap(out);
-            playerCount--;
-        }
+        push(front);
+        play = endScreen();
     }
-    Display();
     return 0;
 }
